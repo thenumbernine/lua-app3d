@@ -80,6 +80,15 @@ return function(cl)
 		self.rightGuiDown = false
 		self.leftAltDown = false
 		self.rightAltDown = false
+
+
+		-- TODO where to do this ...
+		-- orbit is going to handle both touch and mouse events as input
+		-- so orbit will disable SDL's touch-as-mouse
+		sdl.SDL_SetHint("SDL_TOUCH_MOUSE_EVENTS", "0")
+		sdl.SDL_SetHint("SDL_MOUSE_TOUCH_EVENTS", "0")
+		-- hmm, even with both disabled, I'm still seeing a single mouse-motion event per a touch-monitor
+		-- (maybe it is the driver doing this as mouse input?)
 	end
 
 	function cl:update(...)
@@ -89,6 +98,16 @@ return function(cl)
 		if mouse.fingerPinchDelta ~= 0 then
 			local pos1 = mouse.activeFingersInOrder[1].pos
 			self:mouseDownEvent(0, mouse.fingerPinchDelta, true, nil, nil, pos1.x, pos1.y)
+		else
+			-- not pinch-zooming?  see if we should click-to-drag
+			for i,f in ipairs(mouse.activeFingersInOrder) do
+--DEBUG:print('finger', i, 'dragging', f.delta.x, f.delta.y)
+				self:mouseDownEvent(
+					f.delta.x, f.delta.y, 	-- holds finger dx dy
+					false, false, false,	-- shift, gui, alt
+					f.pos.x, f.pos.y
+				)
+			end
 		end
 
 		local shiftDown = self.leftShiftDown or self.rightShiftDown
@@ -151,9 +170,12 @@ return function(cl)
 				local ry = (self.mouse.lastPos.y - .5) * 2
 				local rx2 = aspectRatio * (self.mouse.pos.x - .5) * 2
 				local ry2 = (self.mouse.pos.y - .5) * 2
-				local angle = math.asin((rx2 * ry - ry2 * rx) / math.sqrt((rx^2 + ry^2) * (rx2^2 + ry2^2)))
-				local rotation = quatd():fromAngleAxis(0, 0, 1, math.deg(angle))
-				self.view.angle = (self.view.angle * rotation):normalize()
+				local len = math.sqrt((rx^2 + ry^2) * (rx2^2 + ry2^2))
+				if len > 1e-7 then
+					local angle = math.asin((rx2 * ry - ry2 * rx) / len)
+					local rotation = quatd():fromAngleAxis(0, 0, 1, math.deg(angle))
+					self.view.angle = (self.view.angle * rotation):normalize()
+				end
 			else
 				-- frustum = move orbit center
 				local dist = (self.view.pos - self.view.orbit):length()
@@ -170,12 +192,14 @@ return function(cl)
 			else
 				-- frustum = rotate around orbit
 				local magn = math.sqrt(dx * dx + dy * dy)
-				local fdx = dx / magn
-				local fdy = dy / magn
-				magn = magn * 1000 * math.tan(math.rad(.5 * self.view.fovY))
-				local rotation = quatd():fromAngleAxis(fdy, -fdx, 0, magn)
-				self.view.angle = (self.view.angle * rotation):normalize()
-				self.view.pos = self.view.angle:zAxis() * (self.view.pos - self.view.orbit):length() + self.view.orbit
+				if magn > 1e-7 then
+					local fdx = dx / magn
+					local fdy = dy / magn
+					magn = magn * 1000 * math.tan(math.rad(.5 * self.view.fovY))
+					local rotation = quatd():fromAngleAxis(fdy, -fdx, 0, magn)
+					self.view.angle = (self.view.angle * rotation):normalize()
+					self.view.pos = self.view.angle:zAxis() * (self.view.pos - self.view.orbit):length() + self.view.orbit
+				end
 			end
 		end
 	end
