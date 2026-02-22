@@ -11,9 +11,9 @@ This now holds the generic 3D application classes, like view and orbit, which ca
 
 
 ### See it in Browser
--	[[launch]](https://thenumbernine.github.io/glapp/?dir=glapp/tests&file=test_es.lua)
-	[[source]](https://thenumbernine.github.io/lua/glapp/tests/test_es.lua)
+-	[[launch]](https://thenumbernine.github.io/glapp/?dir=/gl/tests&file=test_es.lua)
+	[[source]](https://thenumbernine.github.io/lua/gl/tests/test_es.lua)
 	polygon demo
--	[[launch]](https://thenumbernine.github.io/glapp/?dir=glapp/tests&file=test_tex.lua)
-	[[source]](https://thenumbernine.github.io/lua/glapp/tests/test_tex.lua)
+-	[[launch]](https://thenumbernine.github.io/glapp/?dir=/gl/tests&file=test_tex.lua)
+	[[source]](https://thenumbernine.github.io/lua/gl/tests/test_tex.lua)
 	texture demo
